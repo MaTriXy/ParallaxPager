@@ -24,30 +24,25 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
   private ViewPager.OnPageChangeListener pageChangeListener;
 
   public ParallaxContainer(Context context) {
-    super(context);
-    adapter = new ParallaxPagerAdapter(context);
+    this(context, null);
   }
 
   public ParallaxContainer(Context context, AttributeSet attrs) {
-    super(context, attrs);
-    adapter = new ParallaxPagerAdapter(context);
+    this(context, attrs, 0);
   }
 
   public ParallaxContainer(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
+
     adapter = new ParallaxPagerAdapter(context);
   }
 
-  @Override
-  public void onWindowFocusChanged(boolean hasFocus) {
+  @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     containerWidth = getMeasuredWidth();
-    if (viewPager != null) {
-      onPageScrolled(viewPager.getCurrentItem(), 0, 0);
-    }
-    super.onWindowFocusChanged(hasFocus);
   }
 
-  public void setLooping (boolean looping) {
+  public void setLooping(boolean looping) {
     isLooping = looping;
     updateAdapterCount();
   }
@@ -56,14 +51,15 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
     adapter.setCount(isLooping ? Integer.MAX_VALUE : pageCount);
   }
 
-  public void setupChildren (LayoutInflater inflater, int... childIds) {
+  public void setupChildren(int... childIds) {
+    setupChildren(LayoutInflater.from(getContext()), childIds);
+  }
+
+  public void setupChildren(LayoutInflater inflater, int... childIds) {
     if (getChildCount() > 0) {
       throw new RuntimeException(
           "setupChildren should only be called once when ParallaxContainer is empty");
     }
-
-    ParallaxLayoutInflater parallaxLayoutInflater =
-        new ParallaxLayoutInflater(inflater, getContext());
 
     if (childIds.length == 1) {
       int id = childIds[0];
@@ -73,7 +69,7 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
     }
 
     for (int childId : childIds) {
-      parallaxLayoutInflater.inflate(childId, this);
+      inflater.inflate(childId, this);
     }
 
     // hold pageCount because it will change after we add viewpager
@@ -103,7 +99,9 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
    * this method is overriden, make sure that the listener methods are called on this
    * class as well.
    */
-  protected void attachOnPageChangeListener(ViewPager viewPager, ViewPager.OnPageChangeListener listener) {
+  @Deprecated
+  protected void attachOnPageChangeListener(ViewPager viewPager,
+      ViewPager.OnPageChangeListener listener) {
     viewPager.setOnPageChangeListener(listener);
   }
 
@@ -125,6 +123,26 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
     }
   }
 
+  /**
+   * <b>NOTE:</b> this is exposed for use with existing code which requires a {@linkplain android.support.v4.view.ViewPager} instance.
+   * Please make sure that if you call methods like {@linkplain android.support.v4.view.ViewPager#setAdapter(android.support.v4.view.PagerAdapter) setAdapter()}
+   * or {@linkplain android.support.v4.view.ViewPager#setOnPageChangeListener(android.support.v4.view.ViewPager.OnPageChangeListener) setOnPageChangeListener()}
+   * on the instance returned, that you do so with forethought and good reason.
+   *
+   * @return the internal ViewPager, null before {@linkplain #setupChildren(int...) setupChildren()} is called
+   */
+  public ViewPager getViewPager() {
+    return viewPager;
+  }
+
+  /**
+   * Set a listener to recieve page change events
+   * @see android.support.v4.view.ViewPager#setOnPageChangeListener(android.support.v4.view.ViewPager.OnPageChangeListener)
+   * @param pageChangeListener the listener, or null to clear
+   */
+  public void setOnPageChangeListener(ViewPager.OnPageChangeListener pageChangeListener) {
+    this.pageChangeListener = pageChangeListener;
+  }
 
   @Override public void onPageScrolled(int pageIndex, float offset, int offsetPixels) {
     if (pageCount > 0) {
@@ -140,8 +158,10 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
           || (isLooping && (pageIndex == tag.index - 1 + pageCount)))
           && containerWidth != 0) {
 
-        // make visible
-        view.setVisibility(VISIBLE);
+        if (!tag.overrideVisibility) {
+          // make visible
+          view.setVisibility(VISIBLE);
+        }
 
         // slide in from right
         view.setTranslationX((containerWidth - offsetPixels) * tag.xIn);
@@ -151,11 +171,11 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
 
         // fade in
         view.setAlpha(1.0f - (containerWidth - offsetPixels) * tag.alphaIn / containerWidth);
-
       } else if (pageIndex == tag.index) {
-
-        // make visible
-        view.setVisibility(VISIBLE);
+        if (!tag.overrideVisibility) {
+          // make visible
+          view.setVisibility(VISIBLE);
+        }
 
         // slide out to left
         view.setTranslationX(0 - offsetPixels * tag.xOut);
@@ -165,12 +185,27 @@ public class ParallaxContainer extends FrameLayout implements ViewPager.OnPageCh
 
         // fade out
         view.setAlpha(1.0f - offsetPixels * tag.alphaOut / containerWidth);
-
       } else {
-        view.setVisibility(GONE);
+        if (!tag.overrideVisibility) {
+          view.setVisibility(GONE);
+        }
       }
     }
+
+    if (pageChangeListener != null) {
+      pageChangeListener.onPageScrolled(pageIndex, offset, offsetPixels);
+    }
   }
-  @Override public void onPageSelected(int position) {}
-  @Override public void onPageScrollStateChanged(int i) {}
+
+  @Override public void onPageSelected(int position) {
+    if (pageChangeListener != null) {
+      pageChangeListener.onPageSelected(position);
+    }
+  }
+
+  @Override public void onPageScrollStateChanged(int i) {
+    if (pageChangeListener != null) {
+      pageChangeListener.onPageScrollStateChanged(i);
+    }
+  }
 }

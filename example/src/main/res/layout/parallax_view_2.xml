@@ -4,9 +4,11 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_horizontal">
+    android:gravity="center_horizontal"
+    >
 
   <ImageView
+      android:id="@+id/imageview_earth"
       android:layout_width="wrap_content"
       android:layout_height="0dp"
       android:layout_weight="1"
@@ -16,7 +18,9 @@
       app:y_in="@dimen/parallax_speed_slow"
       app:a_in="@dimen/parallax_speed_slow"
       app:a_out="@dimen/parallax_speed_slow"
-      android:src="@drawable/earth"/>
+      app:override_visibility="true"
+      android:src="@drawable/earth"
+      />
 
   <LinearLayout
       android:layout_width="wrap_content"
@@ -32,7 +36,8 @@
         android:layout_margin="@dimen/margin_size"
         android:textSize="@dimen/text_size"
         android:textColor="@android:color/white"
-        android:text="@string/earth"/>
+        android:text="@string/earth"
+        />
 
     <TextView
         android:layout_width="wrap_content"
@@ -42,9 +47,10 @@
         android:textColor="@android:color/white"
         app:a_in="@dimen/parallax_speed_fast"
         app:a_out="@dimen/parallax_speed_fast"
-        android:text="@string/home"/>
+        android:text="@string/home"
+        />
 
-      </LinearLayout>
+  </LinearLayout>
 
 
   <ImageView
@@ -57,7 +63,8 @@
       app:y_out="@dimen/parallax_speed_slow_rev"
       app:a_in="@dimen/parallax_speed_slow"
       app:a_out="@dimen/parallax_speed_slow"
-      android:src="@drawable/mars"/>
+      android:src="@drawable/mars"
+      />
 
   <TextView
       android:layout_width="wrap_content"
@@ -67,6 +74,7 @@
       android:textColor="@android:color/white"
       app:x_in="@dimen/parallax_speed_fast"
       app:x_out="@dimen/parallax_speed_fast_rev"
-      android:text="@string/mars"/>
+      android:text="@string/mars"
+      />
 
 </LinearLayout>
